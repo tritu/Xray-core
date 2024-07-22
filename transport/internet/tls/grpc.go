@@ -5,7 +5,7 @@ import (
 	gotls "crypto/tls"
 	"net"
 	"net/url"
-	//"strconv"
+	"strconv"
 
 	utls "github.com/refraction-networking/utls"
 	"google.golang.org/grpc/credentials"
@@ -28,8 +28,8 @@ func (t grpcUtlsInfo) AuthType() string {
 // GetSecurityValue returns security info requested by channelz.
 func (t grpcUtlsInfo) GetSecurityValue() credentials.ChannelzSecurityValue {
 	v := &credentials.TLSChannelzSecurityValue{
-		//StandardName: "0x" + strconv.FormatUint(uint64(t.State.CipherSuite), 16),
-		StandardName: "TLS_CHACHA20_POLY1305_SHA256",
+		StandardName: "0x" + strconv.FormatUint(uint64(t.State.CipherSuite), 16),
+		//StandardName: "TLS_CHACHA20_POLY1305_SHA256",
 	}
 	// Currently there's no way to get LocalCertificate info from tls package.
 	if len(t.State.PeerCertificates) > 0 {
@@ -63,16 +63,16 @@ func (c *grpcUtls) ClientHandshake(ctx context.Context, authority string, rawCon
 		}
 		cfg.ServerName = serverName
 	}
-	// Prioritize TLS_CHACHA20_POLY1305_SHA256
-        customFingerprint := *c.fingerprint
-        customFingerprint.CipherSuites = []uint16{utls.TLS_CHACHA20_POLY1305_SHA256}
-        for _, cs := range c.fingerprint.CipherSuites {
-        	if cs != utls.TLS_CHACHA20_POLY1305_SHA256 {
-                	customFingerprint.CipherSuites = append(customFingerprint.CipherSuites, cs)
-        	}
-        }
-	//conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
-	conn := UClient(rawConn, cfg, &customFingerprint).(*UConn)
+	//// Prioritize TLS_CHACHA20_POLY1305_SHA256
+        //customFingerprint := *c.fingerprint
+        //customFingerprint.CipherSuites = []uint16{utls.TLS_CHACHA20_POLY1305_SHA256}
+        //for _, cs := range c.fingerprint.CipherSuites {
+        //	if cs != utls.TLS_CHACHA20_POLY1305_SHA256 {
+        //        	customFingerprint.CipherSuites = append(customFingerprint.CipherSuites, cs)
+        //	}
+        //}
+	conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
+	//conn := UClient(rawConn, cfg, &customFingerprint).(*UConn)
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- conn.HandshakeContext(ctx)
@@ -113,6 +113,7 @@ func (c *grpcUtls) OverrideServerName(serverNameOverride string) error {
 
 // NewGrpcUtls uses c to construct a TransportCredentials based on uTLS.
 func NewGrpcUtls(c *gotls.Config, fingerprint *utls.ClientHelloID) credentials.TransportCredentials {
+	c.CipherSuites = []uint16{utls.TLS_CHACHA20_POLY1305_SHA256}
 	tc := &grpcUtls{c.Clone(), fingerprint}
 	return tc
 }
