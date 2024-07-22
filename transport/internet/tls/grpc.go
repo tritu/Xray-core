@@ -63,7 +63,16 @@ func (c *grpcUtls) ClientHandshake(ctx context.Context, authority string, rawCon
 		}
 		cfg.ServerName = serverName
 	}
-	conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
+	// Prioritize TLS_CHACHA20_POLY1305_SHA256
+        customFingerprint := *c.fingerprint
+        customFingerprint.CipherSuites = []uint16{utls.TLS_CHACHA20_POLY1305_SHA256}
+        for _, cs := range c.fingerprint.CipherSuites {
+        	if cs != utls.TLS_CHACHA20_POLY1305_SHA256 {
+                	customFingerprint.CipherSuites = append(customFingerprint.CipherSuites, cs)
+        	}
+        }
+	//conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
+	conn := UClient(rawConn, cfg, &customFingerprint).(*UConn)
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- conn.HandshakeContext(ctx)
