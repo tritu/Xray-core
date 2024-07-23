@@ -73,6 +73,8 @@ func (c *grpcUtls) ClientHandshake(ctx context.Context, authority string, rawCon
         //}
 	conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
 	//conn := UClient(rawConn, cfg, &customFingerprint).(*UConn)
+	// Explicitly set the cipher suites for this connection
+	conn.SetCipherSuites([]uint16{utls.TLS_CHACHA20_POLY1305_SHA256})
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- conn.HandshakeContext(ctx)
