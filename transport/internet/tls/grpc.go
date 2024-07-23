@@ -71,10 +71,10 @@ func (c *grpcUtls) ClientHandshake(ctx context.Context, authority string, rawCon
         //        	customFingerprint.CipherSuites = append(customFingerprint.CipherSuites, cs)
         //	}
         //}
+	// Ensure the config uses only the desired cipher suite
+	cfg.CipherSuites = []uint16{utls.TLS_CHACHA20_POLY1305_SHA256}
 	conn := UClient(rawConn, cfg, c.fingerprint).(*UConn)
 	//conn := UClient(rawConn, cfg, &customFingerprint).(*UConn)
-	// Explicitly set the cipher suites for this connection
-	conn.SetCipherSuites([]uint16{utls.TLS_CHACHA20_POLY1305_SHA256})
 	errChannel := make(chan error, 1)
 	go func() {
 		errChannel <- conn.HandshakeContext(ctx)
